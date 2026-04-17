@@ -19,6 +19,32 @@ This project builds a multi-method AI pipeline to classify stellar light curves 
 All methods are **implemented from scratch** using NumPy.
 
 ---
+## 📁 Project Structure
+
+```
+Exoplanet-Transit-Detection-Using-NASA-Kepler-Data/
+│
+├── cumulative_2026.04.12_06.34.10.csv   ← Raw NASA dataset
+├── koi_clean.csv                         ← Cleaned dataset (Phase 2 output)
+│
+├── cleaningdata.py                       ← Phase 2: data cleaning script
+├── preprocessing.py                      ← Phase 3: preprocessing script
+├── decision_tree.py                      ← Phase 4: Decision Tree classifier (from scratch)
+│
+├── requirements.txt                      ← Required Python libraries
+├── .gitignore
+├── LICENSE
+│
+├── X_train.npy                           ← Balanced training features (post-SMOTE)
+├── y_train.npy                           ← Balanced training labels
+├── X_val.npy                             ← Validation features
+├── y_val.npy                             ← Validation labels
+├── X_test.npy                            ← Test features
+├── y_test.npy                            ← Test labels
+├── X_candidates.npy                      ← 1,979 candidate features (inference)
+│
+└── README.md
+```
 
 ## 📊 Performance Summary
 
@@ -34,27 +60,7 @@ All methods are **implemented from scratch** using NumPy.
 
 ---
 
-## 📁 Project Structure
 
-```
-Exoplanet-Transit-Detection-Using-NASA-Kepler-Data/
-│
-├── cumulative_2026.04.12_06.34.10.csv   ← Raw NASA dataset
-├── koi_clean.csv                         ← Cleaned dataset (Phase 2 output)
-│
-├── cleaningdata.py                       ← Phase 2: cleaning script
-├── preprocessing.py                      ← Phase 3: preprocessing script
-│
-├── X_train.npy                           ← Balanced training features
-├── y_train.npy                           ← Balanced training labels
-├── X_val.npy                             ← Validation features
-├── y_val.npy                             ← Validation labels
-├── X_test.npy                            ← Test features
-├── y_test.npy                            ← Test labels
-├── X_candidates.npy                      ← 1,979 candidate features (inference)
-│
-└── README.md
-```
 
 ---
 
