@@ -4,6 +4,12 @@ import pandas as pd
 
 df_model = pd.read_csv('koi_clean.csv')
 target = 'koi_disposition'
+# remove NASA disposition indicators to test true learning
+drop_features = ['koi_score', 'koi_fpflag_nt', 'koi_fpflag_ss', 
+                 'koi_fpflag_co', 'koi_fpflag_ec']
+
+df_model = df_model.drop(columns=drop_features)
+print(f"Shape after dropping disposition indicators: {df_model.shape}")
 # Separate candidates from training data
 train_df = df_model[df_model['koi_disposition'] != 'CANDIDATE'].copy()
 candidate_df = df_model[df_model['koi_disposition'] == 'CANDIDATE'].copy()

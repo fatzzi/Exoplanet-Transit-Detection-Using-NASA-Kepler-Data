@@ -180,5 +180,69 @@ All classifiers will be evaluated on the held-out test set using:
 > Recall is prioritized because a missed genuine planet (false negative) is more scientifically costly than a false alarm.
 
 ---
+## 📊 Performance Summary
+* **Validation Accuracy:** 95.61%
+* **Test Accuracy:** 94.55%
+* **AUC-ROC:** 0.9437
+* **Key Finding:** The model correctly identifies 94% of confirmed planets (Recall) while maintaining a high precision of 91%.
 
-*Last updated: April 12, 2026*
+---
+
+## 🛠️ Logic and Functionality
+
+The classifier is built from scratch using NumPy. Below is an explanation of the core logic:
+
+### 1. Entropy Calculation (`entropy(y)`)
+**How it works:** This function measures the "disorder" or "impurity" of a dataset. 
+**Math:** $H(X) = -\sum p_i \log_2(p_i)$
+If all labels in a group are the same (e.g., all confirmed planets), the entropy is **0**. If there is a 50/50 split, the entropy is **1**.
+
+### 2. Information Gain (`information_gain(...)`)
+**How it works:** It measures the reduction in entropy after splitting a dataset based on a specific feature threshold. 
+**Logic:**
+1. Calculate the entropy of the "parent" node.
+2. Split the data into two "child" nodes (Left and Right).
+3. Calculate the weighted average entropy of the children.
+4. **Gain = Parent Entropy - Weighted Child Entropy.**
+The model seeks the split that provides the highest Information Gain.
+
+### 3. Best Split Selection (`best_split(X, y)`)
+**How it works:** This is the "brain" of the training process. It iterates through every feature in the dataset and every unique value in those features to find the exact "threshold" that maximizes Information Gain.
+
+### 4. Recursive Tree Building (`build_tree(...)`)
+**How it works:** This function builds the tree structure.
+* It stops if a node is "pure" (only one class remains).
+* It stops if the `max_depth` (set to 10) is reached to prevent overfitting.
+* Otherwise, it finds the best split, creates a `Node`, and calls itself recursively to build the left and right sub-branches.
+
+---
+
+## 📂 Data Structure and Nodes
+The tree is composed of `Node` objects. Each node contains:
+* **Feature/Threshold:** The "question" the node asks (e.g., *Is the transit depth < 0.05?*).
+* **Left/Right:** Pointers to the next branches.
+* **Value:** Only present in "Leaf" nodes, representing the final classification (0 for Confirmed, 1 for False Positive).
+
+---
+
+## 🔭 Results Analysis
+
+### Confusion Matrix Breakdown
+The model was tested on 1,138 unseen samples:
+* **True Confirmed:** 386
+* **True False Positives:** 690
+* **False Negatives (Missed Planets):** 36
+* **False Positives (False Alarms):** 26
+
+### Candidate Evaluation
+When applied to the 1,979 "Candidate" signals (unsolved by NASA), the model predicted:
+* **743** CONFIRMED
+* **1236** FALSE POSITIVE
+ Data Pre-processing & Feature SelectionOriginally, the model was trained on the full Kepler dataset and achieved a near-perfect accuracy of 99.03%. However, analysis of the decision paths revealed that the tree was primarily using NASA-derived flags:koi_fpflag_nt, koi_fpflag_ss, koi_fpflag_co, koi_fpflag_eckoi_score (NASA’s own confidence score)
+ 
+ The Problem: These flags are "cheat codes"—they are results assigned by scientists after they already know the classification. A model using these isn't predicting new planets; it's just memorizing NASA’s notes.The Solution: We manually removed these columns to force the model to learn from raw physical observations, such as:Transit Depth: How much light the planet blocks.Orbital Period: How long it takes to orbit the star.Stellar Radius: The size of the parent star.This dropped the accuracy to 94.55%, but created a much more robust and scientifically honest model capable of identifying planets around new stars where these flags don't yet exist.Updated Functions ListFunctionPurposeLogicentropy(y)Measures ImpurityCalculates the randomness of classes using the $log_2$ formula.information_gain(...)Measures ImprovementSubtracts child entropy from parent entropy to see if a split was "useful."best_split(X, y)OptimizationIterates through every feature and every value to find the maximum possible gain.build_tree(...)Recursive LearningRepeatedly calls best_split to grow the tree until it hits max_depth or purity.predict(...)InferenceTraverses the finished tree for new data to reach a leaf node (0 or 1).📝 Final Evaluation ResultsWith the "leaked" columns removed, the model remains highly effective at distinguishing real signals from noise:Precision (0.91): When the model claims a planet is there, it is correct 91% of the time.Recall (0.94): The model successfully catches 94% of all actual confirmed planets in the test set.Total Test Errors: Only 62 mistakes out of 1,138 unseen samples.
+
+ while Decision Trees are great because they are "explainable" (you can literally see the logic of the branches), they can be "greedy" and overfit, which is why we set max_depth=10
+
+This provides a prioritized list for astronomers to focus their follow-up observations on the 743 high-probability candidates.
+*Last updated: April 17, 2026*
