@@ -241,17 +241,184 @@ This provides a prioritised list of **743 high-probability candidates** for astr
 
 ---
 
-## 🗺️ Upcoming Phases
+### ✅ Phase 5 — Naive Bayes (`naive_bayes.py`)
 
-| Phase | Task | Status |
+Gaussian Naive Bayes built from scratch using NumPy. Assumes each feature follows a Gaussian (normal) distribution per class. Uses log-probabilities throughout for numerical stability. An epsilon (`1e-9`) is added to variance and PDF values to prevent division by zero.
+
+| Metric | Value |
+|---|---|
+| Test Accuracy | 85.50% |
+| Precision | 71.40% |
+| Recall | **100%** |
+| F1-Score | 83.32% |
+
+**Confusion Matrix (test set):**
+
+| | Pred Planet | Pred FP |
 |---|---|---|
-| Phase 5 | Naive Bayes classifier (Gaussian, from scratch) | 🔲 Pending |
-| Phase 6 | K-Means + Hierarchical Clustering (from scratch) | 🔲 Pending |
-| Phase 7 | Bayesian Probabilistic Reasoning module | 🔲 Pending |
-| Phase 8 | CNN baseline (Keras) | 🔲 Pending |
-| Phase 9 | Candidate ranking & final predictions | 🔲 Pending |
-| Phase 10 | GUI for interactive visualization | 🔲 Pending |
+| Actual Planet | 412 ✅ | 0 ❌ |
+| Actual FP | 165 ❌ | 561 ✅ |
 
+Naive Bayes achieves perfect recall — it never misses a real planet — at the cost of lower precision. This makes it a valuable evidence source for the Bayesian combiner in Phase 7.
+
+---
+
+### ✅ Phase 6 — K-Means Clustering (`kmeans.py`)
+
+K-Means clustering built from scratch using NumPy. Uses the Elbow Method (K = 1 to 6) to identify optimal K. Operates fully unsupervised — groups stars by physical similarity without using NASA labels. The planet-rich cluster is identified post-hoc by checking cluster composition against training labels.
+
+**Result:** The planet cluster contained ~54% confirmed planets, confirming that physical features carry discriminative signal even without supervision. K-Means is intentionally a weaker evidence source (FPR of 0.851 on the validation set) and its contribution to the final ensemble is appropriately downweighted in Phase 9.
+
+---
+
+### ✅ Phase 7 — Bayesian Probabilistic Reasoning (`bayesian_reasoning.py`)
+
+A Bayesian combiner that sequentially updates a probability estimate using evidence from all three from-scratch classifiers (Naive Bayes, K-Means, Decision Tree).
+
+**How it works:**
+1. Start with the prior: P(planet) = 0.50 (from SMOTE-balanced training set)
+2. For each classifier, apply Bayes' theorem:  
+   `P(planet | evidence) = P(evidence | planet) × P(planet) / P(evidence)`
+3. The output of each update becomes the prior for the next classifier
+4. Final score = P(planet | all three classifiers)
+
+Likelihoods (recall and FPR) are measured on the **validation set** to produce honest, non-overfit estimates.
+
+| Classifier | Recall | FPR | Notes |
+|---|---|---|---|
+| Naive Bayes | 0.993 | 0.220 | Strong recall, moderate FPR |
+| K-Means | 0.990 | 0.851 | Weak separator — unsupervised limitation |
+| Decision Tree | 0.985 | 0.004 | Dominant evidence source |
+
+| Metric | Value |
+|---|---|
+| Test Accuracy | **99.12%** |
+| Precision | 99.26% |
+| Recall | 98.30% |
+| F1-Score | 98.78% |
+
+**Confusion Matrix (test set, 1,138 samples):**
+
+| | Pred Planet | Pred FP |
+|---|---|---|
+| Actual Planet | 405 ✅ | 7 ❌ |
+| Actual FP | 3 ❌ | 723 ✅ |
+
+**Candidate Predictions:** 1,192 likely planets, 787 false positives  
+Of the 1,192 planet predictions, **1,105 had all three classifiers in unanimous agreement** (score = 0.9992).
+
+**All 8 vote combinations verified (sanity check passed):**
+
+| NB | KM | DT | Candidates | Score | Label |
+|---|---|---|---|---|---|
+| planet | planet | planet | 1,105 | 0.9992 | CONFIRMED |
+| planet | FP | planet | 54 | 0.9859 | CONFIRMED |
+| FP | planet | planet | 33 | 0.7215 | CONFIRMED |
+| planet | planet | FP | 284 | 0.0712 | FALSE POSITIVE |
+| FP | FP | planet | 42 | 0.1269 | FALSE POSITIVE |
+| planet | FP | FP | 38 | 0.0043 | FALSE POSITIVE |
+| FP | planet | FP | 64 | 0.0002 | FALSE POSITIVE |
+| FP | FP | FP | 359 | 0.0000 | FALSE POSITIVE |
+
+---
+
+### ✅ Phase 8 — CNN Deep Learning Baseline (`cnn_baseline.py`)
+
+A 1D Convolutional Neural Network built with TensorFlow/Keras as an industry-standard baseline. Treats the 102 tabular features as a 1D sequence and applies two convolutional layers to extract local feature patterns, followed by dense layers for classification.
+
+**Architecture:**
+```
+Conv1D(32 filters, kernel=3, ReLU) → MaxPooling1D(2)
+Conv1D(64 filters, kernel=3, ReLU) → MaxPooling1D(2)
+Flatten → Dense(64, ReLU) → Dropout(0.3) → Dense(1, sigmoid)
+```
+Trained for 20 epochs, batch size 32, Adam optimizer, binary cross-entropy loss.
+
+| Metric | Value |
+|---|---|
+| Test Accuracy | **99.30%** |
+| Precision | 99.27% |
+| Recall | 98.79% |
+| F1-Score | 99.03% |
+
+**Confusion Matrix (test set, 1,138 samples):**
+
+| | Pred Planet | Pred FP |
+|---|---|---|
+| Actual Planet | 407 ✅ | 5 ❌ |
+| Actual FP | 3 ❌ | 723 ✅ |
+
+**Candidate Predictions:** 1,164 likely planets, 815 false positives
+
+**Key finding:** The CNN (99.30%) outperforms the hand-coded Bayesian ensemble (99.12%) by only 0.18 percentage points, demonstrating that our from-scratch NumPy implementations are highly competitive with state-of-the-art deep learning.
+
+---
+
+### ✅ Phase 9 — Candidate Ranking & Final Predictions (`candidate_ranking.py`)
+
+Combines outputs from all five classifiers into a single final ensemble score for each of the 1,979 unresolved candidates. Uses a weighted average reflecting each method's validated test performance.
+
+**Ensemble weights:**
+
+| Classifier | Weight | Rationale |
+|---|---|---|
+| CNN | 40% | Highest test accuracy (99.30%) |
+| Bayesian Reasoning | 40% | Near-equal accuracy (99.12%), fully interpretable |
+| Decision Tree | 12% | Solid performance (94.55%), from scratch |
+| Naive Bayes | 5% | Lower precision but strong recall signal |
+| K-Means | 3% | Weakest separator (unsupervised, high FPR) |
+
+**Confidence tiers:**
+
+| Tier | Threshold | Count |
+|---|---|---|
+| HIGH | score >= 0.80 | **1,112** |
+| MEDIUM | 0.50 <= score < 0.80 | **90** |
+| LOW / False Positive | score < 0.50 | **777** |
+
+**Classifier agreement across all 1,979 candidates:**
+
+| Classifiers agreeing | Candidates |
+|---|---|
+| 5 / 5 (unanimous) | **1,066** |
+| 4 / 5 | 88 |
+| 3 / 5 | 70 |
+| 2 / 5 | 267 |
+| 1 / 5 | 129 |
+| 0 / 5 | 359 |
+
+Top candidates (score = 0.9997, all 5 classifiers unanimous): indices 2, 9, 40, 23, 1517, 45, 53, 1520, 1487, 1509 — and 1,056 more.
+
+**Outputs saved:**
+
+| File | Contents |
+|---|---|
+| `final_candidate_scores.npy` | Ensemble probability per candidate |
+| `final_candidate_labels.npy` | 1 = planet, 0 = false positive |
+| `final_candidate_tiers.npy` | HIGH / MEDIUM / LOW per candidate |
+| `final_candidate_ranking.npy` | Candidate indices sorted best to worst |
+| `final_agreement_counts.npy` | How many classifiers agreed per candidate |
+| `final_candidate_summary.txt` | Human-readable ranked list of all 1,979 |
+
+---
+
+### ✅ Phase 10 — Interactive GUI (`gui.py`)
+
+A desktop application built with Tkinter. Loads all Phase 9 outputs and provides an interactive interface for exploring the full ranked candidate list.
+
+**To run:**
+```bash
+python gui.py
+```
+Requires only Python 3 + NumPy + Tkinter (Tkinter ships with standard Python). All `.npy` output files from Phase 9 must be in the same directory.
+
+**Features:**
+- Animated starfield header with project and team information
+- Stat bar showing total candidates, tier counts, Bayesian accuracy (99.12%), and CNN accuracy (99.30%)
+- Full ranked table of all 1,979 candidates, colour-coded by confidence tier, with search bar, tier filter buttons, and click-to-sort column headers
+- Confidence distribution bar chart (HIGH / MEDIUM / LOW)
+- Candidate detail panel — click any row to see that candidate's ensemble score, tier, 5-dot classifier agreement indicator, and individual Bayesian and CNN score bars
+  
 ---
 
 ## 📐 Evaluation Metrics
@@ -267,4 +434,18 @@ All classifiers are evaluated on the held-out test set using:
 
 ---
 
-*Last updated: April 17, 2026*
+## 🏁 Final Results
+
+Of the 1,979 unresolved Kepler candidates that have never been confirmed or ruled out:
+
+- **1,112 signals** classified as HIGH confidence planet candidates (ensemble score >= 0.80)
+- **1,066 of those** have all five classifiers in unanimous agreement
+- **90 signals** in the MEDIUM confidence tier — worth follow-up investigation
+- **777 signals** classified as likely false positives
+
+This pipeline provides astronomers with a prioritised, ranked list of candidates for ground-based follow-up observation — maximising the scientific return from limited telescope time.
+
+---
+
+*Last updated: April 26, 2026*
+
