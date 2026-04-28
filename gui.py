@@ -3,18 +3,7 @@ import tkinter as tk
 from tkinter import ttk, font
 import math, random, time, threading
 
-# ════════════════════════════════════════════════════════════════════
-#  PHASE 10 — Interactive GUI: Exoplanet Candidate Explorer
-#
-#  Loads all Phase 9 outputs and visualises:
-#    • Live animated starfield background
-#    • Summary statistics dashboard
-#    • Full ranked candidate table (searchable, sortable)
-#    • Per-candidate classifier breakdown panel
-#    • Confidence tier distribution chart (canvas-drawn)
-# ════════════════════════════════════════════════════════════════════
 
-# ── Load Phase 9 data ────────────────────────────────────────────────
 scores  = np.load("final_candidate_scores.npy")
 labels  = np.load("final_candidate_labels.npy")
 tiers   = np.load("final_candidate_tiers.npy")
@@ -28,7 +17,7 @@ n_medium = int(np.sum(tiers == "MEDIUM"))
 n_low    = int(np.sum(tiers == "LOW"))
 n_total  = len(scores)
 
-# ── Colour palette ───────────────────────────────────────────────────
+# Colour palette 
 BG        = "#04060f"
 PANEL     = "#080d1a"
 BORDER    = "#1a2540"
@@ -46,9 +35,8 @@ LOW_COL   = "#ef5350"
 def tier_color(t):
     return HIGH_COL if t == "HIGH" else (MED_COL if t == "MEDIUM" else LOW_COL)
 
-# ════════════════════════════════════════════════════════════════════
-#  STARFIELD CANVAS
-# ════════════════════════════════════════════════════════════════════
+# STARFIELD CANVAS
+
 class Starfield:
     def __init__(self, canvas, w, h, n=180):
         self.canvas = canvas
@@ -86,9 +74,7 @@ class Starfield:
         self._running = False
 
 
-# ════════════════════════════════════════════════════════════════════
-#  MAIN APPLICATION
-# ════════════════════════════════════════════════════════════════════
+# MAIN APPLICATION
 class ExoplanetGUI:
     def __init__(self, root):
         self.root = root
@@ -102,7 +88,7 @@ class ExoplanetGUI:
         self._populate_table()
         self._draw_chart()
 
-    # ── fonts ────────────────────────────────────────────────────────
+    # fonts
     def _build_fonts(self):
         self.f_title  = font.Font(family="Courier New", size=17, weight="bold")
         self.f_head   = font.Font(family="Courier New", size=11, weight="bold")
@@ -111,9 +97,9 @@ class ExoplanetGUI:
         self.f_stat   = font.Font(family="Courier New", size=22, weight="bold")
         self.f_sub    = font.Font(family="Courier New", size=9)
 
-    # ── top-level layout ─────────────────────────────────────────────
+    # top-level layout
     def _build_layout(self):
-        # ── header ──
+        # header
         hdr = tk.Frame(self.root, bg=PANEL, height=64)
         hdr.pack(fill="x", padx=0, pady=0)
         hdr.pack_propagate(False)
@@ -128,7 +114,7 @@ class ExoplanetGUI:
         tk.Label(hdr, text="NASA Kepler KOI  •  Multi-Method AI Pipeline  •  IBA Karachi 2026",
                  font=self.f_small, bg=PANEL, fg=SUBTEXT).place(x=27, y=42)
 
-        # ── stat bar ──
+        # stat bar
         stat_bar = tk.Frame(self.root, bg=BG)
         stat_bar.pack(fill="x", padx=12, pady=(10, 4))
         self._stat_card(stat_bar, str(n_total), "CANDIDATES", ACCENT)
@@ -138,7 +124,7 @@ class ExoplanetGUI:
         self._stat_card(stat_bar, "99.12%",     "BAYESIAN ACC",GOLD)
         self._stat_card(stat_bar, "99.30%",     "CNN ACC",     GREEN)
 
-        # ── body: left table + right panels ──
+        # body: left table + right panels
         body = tk.Frame(self.root, bg=BG)
         body.pack(fill="both", expand=True, padx=12, pady=(0, 10))
 
@@ -162,7 +148,7 @@ class ExoplanetGUI:
         tk.Label(f, text=value, font=self.f_stat, bg=PANEL, fg=color).pack()
         tk.Label(f, text=label, font=self.f_sub,  bg=PANEL, fg=SUBTEXT).pack()
 
-    # ── candidate table ──────────────────────────────────────────────
+    # candidate table
     def _build_table(self, parent):
         ctrl = tk.Frame(parent, bg=BG)
         ctrl.pack(fill="x", pady=(0, 6))
@@ -282,7 +268,7 @@ class ExoplanetGUI:
         idx  = int(vals[1])
         self._update_detail(idx, int(vals[0]))
 
-    # ── right panel ──────────────────────────────────────────────────
+    # right panel
     def _build_right(self, parent):
         # tier chart
         chart_frame = tk.Frame(parent, bg=PANEL,
@@ -425,9 +411,7 @@ class ExoplanetGUI:
             y += 16
 
 
-# ════════════════════════════════════════════════════════════════════
 #  ENTRY POINT
-# ════════════════════════════════════════════════════════════════════
 if __name__ == "__main__":
     root = tk.Tk()
     app  = ExoplanetGUI(root)
