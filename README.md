@@ -27,11 +27,17 @@ Exoplanet-Transit-Detection-Using-NASA-Kepler-Data/
 ├── cumulative_2026.04.12_06.34.10.csv   ← Raw NASA dataset
 ├── koi_clean.csv                         ← Cleaned dataset (Phase 2 output)
 │
-├── cleaningdata.py                       ← Phase 2: data cleaning script
-├── preprocessing.py                      ← Phase 3: preprocessing script
-├── decision_tree.py                      ← Phase 4: Decision Tree classifier (from scratch)
+├── cleaningdata.py                       ← Phase 2: data cleaning
+├── preprocessing.py                      ← Phase 3: preprocessing + SMOTE
+├── decision_tree.py                      ← Phase 4: Decision Tree 
+├── naive_bayes.py                        ← Phase 5: Gaussian Naive Bayes 
+├── kmeans.py                             ← Phase 6: K-Means Clustering 
+├── bayesian_reasoning.py                 ← Phase 7: Bayesian probabilistic reasoning
+├── cnn_baseline.py                       ← Phase 8: CNN baseline 
+├── candidate_ranking.py                  ← Phase 9: Final candidate ranking
+├── gui.py                                ← Phase 10: Interactive GUI
 │
-├── requirements.txt                      ← Required Python libraries
+├── requirements.txt
 ├── .gitignore
 ├── LICENSE
 │
@@ -42,6 +48,17 @@ Exoplanet-Transit-Detection-Using-NASA-Kepler-Data/
 ├── X_test.npy                            ← Test features
 ├── y_test.npy                            ← Test labels
 ├── X_candidates.npy                      ← 1,979 candidate features (inference)
+│
+├── bayesian_candidate_scores.npy         ← Phase 7 output
+├── bayesian_candidate_labels.npy         ← Phase 7 output
+├── cnn_candidate_scores.npy              ← Phase 8 output
+├── cnn_candidate_labels.npy              ← Phase 8 output
+├── final_candidate_scores.npy            ← Phase 9 output
+├── final_candidate_labels.npy            ← Phase 9 output
+├── final_candidate_tiers.npy             ← Phase 9 output
+├── final_candidate_ranking.npy           ← Phase 9 output
+├── final_agreement_counts.npy            ← Phase 9 output
+├── final_candidate_summary.txt           ← Phase 9 output
 │
 └── README.md
 ```
